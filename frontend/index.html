@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;--surface3:#262626;
+    --accent:#e8ff47;--accent2:#ff6b35;--text:#f0f0f0;--muted:#888;--border:#2a2a2a;
+    --radius:12px;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overflow-x:hidden}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  .logo{font-family:var(--font-display);font-size:28px;letter-spacing:2px;color:var(--accent)}
+  .nav-tabs{display:flex;gap:4px}
+  .tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--muted);border:none;background:transparent;font-family:var(--font-body);transition:all .2s}
+  .tab:hover{color:var(--text);background:var(--surface2)}
+  .tab.active{color:var(--bg);background:var(--accent);font-weight:500}
+
+  .page{display:none;padding:24px;max-width:1000px;margin:0 auto}
+  .page.active{display:block}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px}
+  .stat-card .label{font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .stat-card .value{font-family:var(--font-display);font-size:36px;color:var(--accent);letter-spacing:1px}
+  .stat-card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .stat-card.accent2 .value{color:var(--accent2)}
+
+  .section-title{font-family:var(--font-display);font-size:24px;letter-spacing:1px;margin-bottom:16px;color:var(--text)}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+  .chart-legend{display:flex;gap:16px;margin-bottom:16px;font-size:13px;color:var(--muted)}
+  .chart-legend span{display:flex;align-items:center;gap:6px}
+  .leg-dot{width:10px;height:10px;border-radius:2px}
+  .chart-wrap{position:relative;height:220px}
+
+  .workout-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;transition:border-color .2s}
+  .workout-item:hover{border-color:var(--accent)}
+  .workout-type-badge{background:var(--surface3);border-radius:8px;padding:10px 14px;font-family:var(--font-display);font-size:18px;letter-spacing:1px;min-width:90px;text-align:center}
+  .workout-meta{flex:1}
+  .workout-meta .name{font-weight:500;font-size:15px;margin-bottom:4px}
+  .workout-meta .details{font-size:13px;color:var(--muted)}
+  .workout-stats{display:flex;gap:20px;text-align:right}
+  .ws-item .ws-val{font-family:var(--font-display);font-size:22px;color:var(--accent)}
+  .ws-item .ws-label{font-size:11px;color:var(--muted)}
+  .delete-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:16px;transition:color .2s}
+  .delete-btn:hover{color:#ff5555}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty-icon{font-size:48px;margin-bottom:12px}
+
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .form-group{display:flex;flex-direction:column;gap:6px}
+  .form-group label{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .form-group input,.form-group select,.form-group textarea{
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:15px;
+    transition:border-color .2s;outline:none
+  }
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
+  .form-group select option{background:var(--surface2)}
+  .form-group textarea{resize:vertical;min-height:80px}
+  .exercise-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:center}
+  .ex-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none;transition:border-color .2s;width:100%}
+  .ex-input:focus{border-color:var(--accent)}
+  .add-exercise-btn{background:none;border:1px dashed var(--border);border-radius:8px;padding:10px;color:var(--muted);cursor:pointer;font-size:13px;width:100%;font-family:var(--font-body);transition:all .2s;margin-top:8px}
+  .add-exercise-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .remove-ex{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px;font-size:18px;transition:color .2s}
+  .remove-ex:hover{color:#ff5555}
+  .submit-btn{background:var(--accent);border:none;border-radius:8px;padding:14px 32px;font-family:var(--font-display);font-size:20px;letter-spacing:1px;color:var(--bg);cursor:pointer;margin-top:20px;transition:opacity .2s}
+  .submit-btn:hover{opacity:.85}
+  .submit-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.success{background:#1a2a0a;border:1px solid #3a5a0a;color:#a8e060}
+  .toast.error{background:#2a0a0a;border:1px solid #5a1a1a;color:#ff8080}
+
+  .loader{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .api-url-bar{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;margin-bottom:20px;font-size:13px}
+  .api-url-bar input{background:none;border:none;color:var(--accent);font-family:var(--font-body);font-size:13px;flex:1;outline:none}
+  .api-url-bar .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .api-url-bar .dot.online{background:#4ade80}
+
+  @media(max-width:700px){
+    .stats-grid{grid-template-columns:1fr 1fr}
+    .form-grid{grid-template-columns:1fr}
+    .exercise-row{grid-template-columns:1fr 1fr;gap:8px}
+    .exercise-row .ex-input:first-child{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">FITTRACK</div>
+  <div class="nav-tabs">
+    <button class="tab active" onclick="showPage('dashboard')">Дашборд</button>
+    <button class="tab" onclick="showPage('workouts')">Тренировки</button>
+    <button class="tab" onclick="showPage('add')">+ Добавить</button>
+    <button class="tab" onclick="showPage('stats')">Статистика</button>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;margin-top:8px">
+    <div>
+      <div style="font-family:var(--font-display);font-size:40px;letter-spacing:2px">Привет, атлет</div>
+      <div style="color:var(--muted);font-size:14px" id="dash-date"></div>
+    </div>
+  </div>
+  <div class="api-url-bar">
+    <div class="dot" id="api-dot"></div>
+    <span style="color:var(--muted)">API:</span>
+    <input id="api-url-input" value="http://localhost:8000" onchange="setApiUrl(this.value)">
+    <button onclick="checkApi()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px;font-family:var(--font-body)">Проверить</button>
+  </div>
+  <div class="stats-grid" id="dash-stats">
+    <div class="stat-card"><div class="label">Тренировок</div><div class="value" id="s-total">—</div></div>
+    <div class="stat-card"><div class="label">Часов</div><div class="value" id="s-hours">—</div><div class="sub" id="s-min"></div></div>
+    <div class="stat-card accent2"><div class="label">Калорий</div><div class="value" id="s-kcal">—</div></div>
+    <div class="stat-card"><div class="label">Серия</div><div class="value" id="s-streak">—</div><div class="sub">дней подряд</div></div>
+  </div>
+  <div class="chart-card">
+    <div style="font-size:14px;color:var(--muted);margin-bottom:4px">Активность за последние 7 дней</div>
+    <div class="chart-legend">
+      <span><span class="leg-dot" style="background:#e8ff47"></span>Минуты</span>
+      <span><span class="leg-dot" style="background:#ff6b35"></span>Калории</span>
+    </div>
+    <div class="chart-wrap"><canvas id="actChart"></canvas></div>
+  </div>
+  <div class="section-title">Последние тренировки</div>
+  <div id="dash-recent"></div>
+</div>
+
+<!-- WORKOUTS -->
+<div class="page" id="page-workouts">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;margin-top:8px">
+    <div class="section-title" style="margin:0">Все тренировки</div>
+    <select id="filter-type" onchange="renderWorkouts()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:14px">
+      <option value="">Все типы</option>
+      <option>Силовая</option><option>Кардио</option><option>Растяжка</option>
+      <option>HIIT</option><option>Йога</option><option>Другое</option>
+    </select>
+  </div>
+  <div id="workouts-list"></div>
+</div>
+
+<!-- ADD -->
+<div class="page" id="page-add">
+  <div style="font-family:var(--font-display);font-size:36px;letter-spacing:2px;margin-bottom:20px;margin-top:8px">Новая тренировка</div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="form-group"><label>Дата</label><input type="date" id="f-date"></div>
+      <div class="form-group"><label>Тип тренировки</label>
+        <select id="f-type">
+          <option>Силовая</option><option>Кардио</option><option>Растяжка</option>
+          <option>HIIT</option><option>Йога</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Длительность (мин)</label><input type="number" id="f-duration" placeholder="45" min="1"></div>
+      <div class="form-group"><label>Калории</label><input type="number" id="f-calories" placeholder="300" min="0"></div>
+    </div>
+    <div class="form-group" style="margin-top:16px"><label>Заметки</label><textarea id="f-notes" placeholder="Как прошла тренировка?"></textarea></div>
+  </div>
+  <div class="form-card">
+    <div style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px">Упражнения</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--muted)">Название</div>
+      <div style="font-size:12px;color:var(--muted)">Подходы</div>
+      <div style="font-size:12px;color:var(--muted)">Повторения</div>
+      <div style="font-size:12px;color:var(--muted)">Вес (кг)</div>
+      <div></div>
+    </div>
+    <div id="exercises-list"></div>
+    <button class="add-exercise-btn" onclick="addExRow()">+ Добавить упражнение</button>
+  </div>
+  <button class="submit-btn" id="save-btn" onclick="saveWorkout()">СОХРАНИТЬ</button>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div style="font-family:var(--font-display);font-size:36px;letter-spacing:2px;margin-bottom:20px;margin-top:8px">Статистика</div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
+    <div class="chart-card" style="margin-bottom:0">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Тренировки по типам</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="typeChart"></canvas></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:0">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Длительность по месяцам (мин)</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="monthChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let API = localStorage.getItem('fittrack_api') || 'http://localhost:8000';
+let charts = {};
+const TYPE_COLORS = {
+  'Силовая':'#e8ff47','Кардио':'#ff6b35','Растяжка':'#60d4e0',
+  'HIIT':'#ff3366','Йога':'#a78bfa','Другое':'#888'
+};
+
+function setApiUrl(v){ API = v.trim().replace(/\/$/, ''); localStorage.setItem('fittrack_api', API); }
+
+async function apiFetch(path, opts={}){
+  const res = await fetch(API + path, {
+    headers:{'Content-Type':'application/json'},
+    ...opts
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({detail:'Ошибка'})); throw new Error(e.detail||res.statusText); }
+  if(res.status===204) return null;
+  return res.json();
+}
+
+function toast(msg, type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+async function checkApi(){
+  const dot=document.getElementById('api-dot');
+  document.getElementById('api-url-input').value=API;
+  try{
+    await apiFetch('/');
+    dot.classList.add('online');
+    toast('API подключён ✓');
+  }catch{
+    dot.classList.remove('online');
+    toast('Не удалось подключиться к API', 'error');
+  }
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const map={dashboard:'Дашборд',workouts:'Тренировки',add:'+',stats:'Статистика'};
+  document.querySelectorAll('.tab').forEach(t=>{ if(t.textContent.includes(map[id]))t.classList.add('active'); });
+  if(id==='dashboard') renderDashboard();
+  else if(id==='workouts') renderWorkouts();
+  else if(id==='stats') renderStats();
+  else if(id==='add') initAddForm();
+}
+
+function fmtDate(d){
+  return new Date(d+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ── DASHBOARD ──
+async function renderDashboard(){
+  document.getElementById('api-url-input').value = API;
+  try{
+    const stats = await apiFetch('/stats');
+    document.getElementById('s-total').textContent = stats.total_workouts;
+    document.getElementById('s-hours').textContent = Math.round(stats.total_minutes/60);
+    document.getElementById('s-min').textContent = stats.total_minutes+' мин';
+    document.getElementById('s-kcal').textContent = (stats.total_calories/1000).toFixed(1)+'k';
+    document.getElementById('s-streak').textContent = stats.streak_days;
+    document.getElementById('api-dot').classList.add('online');
+    if(stats.weekly) renderActivityChart(stats.weekly);
+  }catch(e){
+    document.getElementById('api-dot').classList.remove('online');
+    toast('API недоступен: '+e.message, 'error');
+  }
+
+  try{
+    const workouts = await apiFetch('/workouts?limit=3');
+    const el=document.getElementById('dash-recent');
+    if(!workouts.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">🏋️</div><p>Добавь первую тренировку!</p></div>'; return; }
+    el.innerHTML=workouts.map(w=>workoutCard(w,false)).join('');
+  }catch{}
+}
+
+function renderActivityChart(weekly){
+  const labels=weekly.map(d=>new Date(d.date+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'short'}));
+  const minData=weekly.map(d=>d.minutes);
+  const kcalData=weekly.map(d=>d.calories);
+  if(charts.act) charts.act.destroy();
+  charts.act=new Chart(document.getElementById('actChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Минуты',data:minData,backgroundColor:'#e8ff4780',borderColor:'#e8ff47',borderWidth:1.5,borderRadius:4},
+      {label:'Калории',data:kcalData,backgroundColor:'#ff6b3580',borderColor:'#ff6b35',borderWidth:1.5,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#888',font:{size:12}},grid:{color:'#ffffff0a'}},
+              y:{ticks:{color:'#888',font:{size:12}},grid:{color:'#ffffff0a'}}}}
+  });
+}
+
+// ── WORKOUTS ──
+function workoutCard(w, showDel=true){
+  const tc=TYPE_COLORS[w.type]||'#888';
+  const exCount=w.exercises?w.exercises.length:0;
+  return`<div class="workout-item">
+    <div class="workout-type-badge" style="color:${tc}">${w.type}</div>
+    <div class="workout-meta">
+      <div class="name">${fmtDate(w.date)}</div>
+      <div class="details">${exCount} упражнений${w.notes?' · '+w.notes.slice(0,50)+(w.notes.length>50?'…':''):''}</div>
+    </div>
+    <div class="workout-stats">
+      <div class="ws-item"><div class="ws-val">${w.duration}</div><div class="ws-label">мин</div></div>
+      <div class="ws-item"><div class="ws-val">${w.calories}</div><div class="ws-label">ккал</div></div>
+    </div>
+    ${showDel?`<button class="delete-btn" onclick="deleteWorkout(${w.id},event)">✕</button>`:''}
+  </div>`;
+}
+
+async function renderWorkouts(){
+  const ft=document.getElementById('filter-type')?.value||'';
+  const el=document.getElementById('workouts-list');
+  el.innerHTML='<div style="color:var(--muted);padding:20px"><span class="loader"></span>Загрузка...</div>';
+  try{
+    const url='/workouts?limit=200'+(ft?'&type='+encodeURIComponent(ft):'');
+    const data=await apiFetch(url);
+    if(!data.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>Нет тренировок</p></div>'; return; }
+    el.innerHTML=data.map(w=>workoutCard(w,true)).join('');
+  }catch(e){ el.innerHTML=`<div class="empty-state"><p style="color:#ff8080">Ошибка: ${e.message}</p></div>`; }
+}
+
+async function deleteWorkout(id, e){
+  e.stopPropagation();
+  try{
+    await apiFetch('/workouts/'+id, {method:'DELETE'});
+    toast('Тренировка удалена');
+    renderWorkouts();
+  }catch(e){ toast('Ошибка удаления: '+e.message,'error'); }
+}
+
+// ── ADD FORM ──
+function initAddForm(){
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-duration').value='';
+  document.getElementById('f-calories').value='';
+  document.getElementById('f-notes').value='';
+  document.getElementById('exercises-list').innerHTML='';
+  addExRow();
+}
+
+function addExRow(){
+  const div=document.createElement('div');
+  div.className='exercise-row';
+  div.innerHTML=`
+    <input class="ex-input" type="text" placeholder="Название упражнения">
+    <input class="ex-input" type="number" placeholder="3" min="1">
+    <input class="ex-input" type="number" placeholder="10" min="1">
+    <input class="ex-input" type="number" placeholder="60" min="0" step="0.5">
+    <button class="remove-ex" onclick="this.parentElement.remove()">−</button>
+  `;
+  document.getElementById('exercises-list').appendChild(div);
+}
+
+async function saveWorkout(){
+  const btn=document.getElementById('save-btn');
+  const date=document.getElementById('f-date').value;
+  const duration=document.getElementById('f-duration').value;
+  if(!date||!duration){ toast('Заполни дату и длительность','error'); return; }
+
+  const exercises=[];
+  document.querySelectorAll('#exercises-list .exercise-row').forEach(row=>{
+    const inp=row.querySelectorAll('input');
+    const name=inp[0].value.trim();
+    if(name) exercises.push({name,sets:+inp[1].value||1,reps:+inp[2].value||1,weight:+inp[3].value||0});
+  });
+
+  const body={
+    date,
+    type:document.getElementById('f-type').value,
+    duration:+duration,
+    calories:+document.getElementById('f-calories').value||0,
+    notes:document.getElementById('f-notes').value,
+    exercises
+  };
+
+  btn.disabled=true; btn.innerHTML='<span class="loader"></span>СОХРАНЕНИЕ...';
+  try{
+    await apiFetch('/workouts',{method:'POST',body:JSON.stringify(body)});
+    toast('Тренировка сохранена ✓');
+    initAddForm();
+  }catch(e){ toast('Ошибка: '+e.message,'error'); }
+  finally{ btn.disabled=false; btn.textContent='СОХРАНИТЬ'; }
+}
+
+// ── STATS ──
+async function renderStats(){
+  try{
+    const stats=await apiFetch('/stats');
+    document.getElementById('stats-grid').innerHTML=`
+      <div class="stat-card"><div class="label">Тренировок</div><div class="value">${stats.total_workouts}</div></div>
+      <div class="stat-card"><div class="label">Часов</div><div class="value">${Math.round(stats.total_minutes/60)}</div><div class="sub">${stats.total_minutes} мин</div></div>
+      <div class="stat-card accent2"><div class="label">Калорий</div><div class="value">${Math.round(stats.total_calories/1000*10)/10}k</div></div>
+      <div class="stat-card"><div class="label">Среднее время</div><div class="value">${Math.round(stats.avg_duration)}</div><div class="sub">мин</div></div>
+    `;
+
+    if(stats.by_type && stats.by_type.length){
+      const keys=stats.by_type.map(r=>r.type), vals=stats.by_type.map(r=>r.count), colors=keys.map(k=>TYPE_COLORS[k]||'#888');
+      if(charts.type) charts.type.destroy();
+      charts.type=new Chart(document.getElementById('typeChart'),{
+        type:'doughnut',
+        data:{labels:keys,datasets:[{data:vals,backgroundColor:colors,borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+          plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:12},boxWidth:12,padding:12}}}}
+      });
+    }
+
+    if(stats.by_month && stats.by_month.length){
+      const months=stats.by_month.slice(-6);
+      const labels=months.map(m=>new Date(m.month+'-01').toLocaleDateString('ru-RU',{month:'short',year:'2-digit'}));
+      if(charts.month) charts.month.destroy();
+      charts.month=new Chart(document.getElementById('monthChart'),{
+        type:'bar',
+        data:{labels,datasets:[{data:months.map(m=>m.minutes),backgroundColor:'#e8ff4766',borderColor:'#e8ff47',borderWidth:1.5,borderRadius:4}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#ffffff0a'}},
+                  y:{ticks:{color:'#888',font:{size:11}},grid:{color:'#ffffff0a'}}}}
+      });
+    }
+  }catch(e){ toast('Ошибка загрузки статистики: '+e.message,'error'); }
+}
+
+// init
+document.getElementById('dash-date').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+document.getElementById('api-url-input').value=API;
+initAddForm();
+checkApi();
+renderDashboard();
+</script>
+</body>
+</html>
